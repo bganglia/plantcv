@@ -10,14 +10,15 @@ from plantcv.plantcv import Spectral_data
 from plantcv.plantcv.transform import rescale
 
 
-def _find_closest(A, target):
+def _find_closest(spectral_array, target):
     # A must be sorted
-    idx = A.searchsorted(target)
-    idx = np.clip(idx, 1, len(A) - 1)
-    left = A[idx - 1]
-    right = A[idx]
+    idx = spectral_array.searchsorted(target)
+    idx = np.clip(idx, 1, len(spectral_array) - 1)
+    left = spectral_array[idx - 1]
+    right = spectral_array[idx]
     idx -= target - left < right - target
     return idx
+
 
 
 def read_data(filename):
@@ -99,9 +100,9 @@ def read_data(filename):
         min_wavelength = min([float(i) for i in wavelength_dict.keys()])
         # Check range of available wavelength
         if max_wavelength >= 635 and min_wavelength <= 490:
-            id_red = _find_closest(np.array([float(i) for i in wavelength_dict.keys()]), 710)
-            id_green = _find_closest(np.array([float(i) for i in wavelength_dict.keys()]), 540)
-            id_blue = _find_closest(np.array([float(i) for i in wavelength_dict.keys()]), 480)
+            id_red = _find_closest(spectral_array=np.array([float(i) for i in wavelength_dict.keys()]), target=710)
+            id_green = _find_closest(spectral_array=np.array([float(i) for i in wavelength_dict.keys()]), target=540)
+            id_blue = _find_closest(spectral_array=np.array([float(i) for i in wavelength_dict.keys()]), target=480)
 
             pseudo_rgb = cv2.merge((array_data[:, :, [id_blue]],
                                     array_data[:, :, [id_green]],
