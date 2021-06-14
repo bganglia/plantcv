@@ -100,7 +100,8 @@ def metadata_parser(config):
                                 # If the metadata type has a user-provided restriction
                                 if term in config.metadata_filters:
                                     # If the input value does not match the image value, fail the image
-                                    if meta_value != config.metadata_filters[term]:
+                                    #if meta_value != config.metadata_filters[term]:
+                                    if not meta_value in config.metadata_filters[term]:
                                         img_pass = 0
                                 img_meta[term] = meta_value
                             # If the same metadata is found in the CSV file, store the value
@@ -303,3 +304,35 @@ def _parse_filename(filename, delimiter, regex):
             metadata = []
     return metadata
 ###########################################
+
+def parse_args_match(metadata_string):
+    matches_single_quoted_string = "('([^']|(\\\\'))*')" #Pattern must be surrounded by quotes, and cannot contain quotes unless they are escaped.
+    matches_double_quoted_string = "(\"([^\"]|(\\\\\"))*\")" #Pattern must be surrounded by quotes, and cannot contain quotes unless they are escaped.
+    matches_unquoted_string = "(((\\\\:)|(\\\\,)|(\\\\\")|(\\\\')|(\\\\\])|(\\\\\[)|[^\[\]'\":,;])+)" #Pattern cannot contain any of []'":,; unless they are escaped.
+    matches_string = f"({matches_single_quoted_string}|{matches_double_quoted_string}|{matches_unquoted_string})"
+
+    matches_list_bracket = f"\\[{matches_string}(,{matches_string})+\\]"
+
+    matches_list_semicolon = f"({matches_string}(;{matches_string})+)"
+
+    #matches_list = f"(\\[{comma_item}+\\]|{semicolon_item}+)"
+    matches_list = f"({matches_list_bracket}|{matches_list_semicolon})"
+
+    re.match(matches_list, "[a,b,c]")
+
+    matches_pair = f"(?P<key>{matches_string}):(?P<value>{matches_list}|{matches_string})"
+
+    metadata_dict = {}
+
+    for pair in re.finditer(matches_pair, metadata_string):
+        key = pair["key"]
+        if not key in metadata_dict:
+            metadata_dict[key] = []
+        if re.match(matches_list, pair["value"]):
+            for match in re.finditer(matches_string, pair["value"]):
+                metadata_dict[key].append(match.group(0))
+        else:
+            metadata_dict[key].append(pair["value"])
+
+    #Remove quotes/escaped characters from any strings
+    return metadata_dict
