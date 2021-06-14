@@ -6462,6 +6462,72 @@ def test_plantcv_utils_tabulate_bayes_classes_missing_input():
         plantcv.utils.tabulate_bayes_classes(input_file=os.path.join(PIXEL_VALUES), output_file=outfile)
 
 
+def metadata_filters_are_functionally_equivalent(left, right):
+    print(left)
+    print(right)
+    def sanitize_values(filters):
+        for key, value in filters.items():
+            if not isinstance(value, list):
+                filters[key] = [value]
+        return filters
+    left = sanitize_values(left)
+    right = sanitize_values(right)
+    return left == right
+
+def test_plantcv_parallel_parse_match_arg():
+    filter_as_string = "id:1abc"
+    correct_filter = {"id":"1abc"}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = "id:[1abc,2def]"
+    correct_filter = {"id":["1abc", "2def"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = "id:1abc,id:2def"
+    correct_filter = {"id":["1abc", "2def"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+    
+    filter_as_string = "id:1abc,id:2def,id:[3ghi,4jkl]"
+    correct_filter = {"id":["1abc","2def","3ghi","4jkl"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = "id:[1abc,2def],id:3ghi,id:4jkl"
+    correct_filter = {"id":["1abc","2def","3ghi","4jkl"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+    
+    filter_as_string = "id:[1abc,2def],camera:3ghi,camera:4jkl"
+    correct_filter = {"id":["1abc","2def"],
+                      "camera":["3ghi","4jkl"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = "camera:1abc,camera:2def,id:[3ghi,4jkl]"
+    correct_filter = {"id":["3ghi","4jkl"],
+                      "camera":["1abc","2def"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = "camera:'1abc'"
+    correct_filter = {"camera":["1abc"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = 'camera:"1abc"'
+    correct_filter = {"camera":["1abc"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+    filter_as_string = 'camera:"1abc"'
+    correct_filter = {"camera":["1abc"]}
+    observed_filter = plantcv.parallel.parse_args_match(filter_as_string)
+    assert metadata_filters_are_functionally_equivalent(correct_filter, observed_filter)
+
+
 # ##############################
 # Clean up test files
 # ##############################
