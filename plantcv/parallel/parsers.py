@@ -306,26 +306,24 @@ def _parse_filename(filename, delimiter, regex):
 ###########################################
 
 def parse_args_match(metadata_string):
-    matches_single_quoted_string = "('([^']|(\\\\'))*')" #Pattern must be surrounded by quotes, and cannot contain quotes unless they are escaped.
-    matches_double_quoted_string = "(\"([^\"]|(\\\\\"))*\")" #Pattern must be surrounded by quotes, and cannot contain quotes unless they are escaped.
-    matches_unquoted_string = "(((\\\\:)|(\\\\,)|(\\\\\")|(\\\\')|(\\\\\])|(\\\\\[)|[^\[\]'\":,;])+)" #Pattern cannot contain any of []'":,; unless they are escaped.
+
+    matches_single_quoted_string = "('([^']*)')" #Pattern must be surrounded by quotes
+    matches_double_quoted_string = "(\"([^\"]*)\")" #Pattern must be surrounded by quotes
+    matches_unquoted_string = "(([^\[\]'\":,;])+)" #Pattern cannot contain any of []'":,;
     matches_string = f"({matches_single_quoted_string}|{matches_double_quoted_string}|{matches_unquoted_string})"
 
     matches_list_bracket = f"\\[{matches_string}(,{matches_string})+\\]"
 
     matches_list_semicolon = f"({matches_string}(;{matches_string})+)"
 
-    #matches_list = f"(\\[{comma_item}+\\]|{semicolon_item}+)"
     matches_list = f"({matches_list_bracket}|{matches_list_semicolon})"
-
-    re.match(matches_list, "[a,b,c]")
 
     matches_pair = f"(?P<key>{matches_string}):(?P<value>{matches_list}|{matches_string})"
 
     metadata_dict = {}
 
     for pair in re.finditer(matches_pair, metadata_string):
-        key = pair["key"]
+        key = pair["key"] # get string of key, without quotes
         if not key in metadata_dict:
             metadata_dict[key] = []
         if re.match(matches_list, pair["value"]):
@@ -334,5 +332,4 @@ def parse_args_match(metadata_string):
         else:
             metadata_dict[key].append(pair["value"])
 
-    #Remove quotes/escaped characters from any strings
     return metadata_dict
