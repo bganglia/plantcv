@@ -307,6 +307,13 @@ def _parse_filename(filename, delimiter, regex):
 
 def parse_args_match(metadata_string):
 
+    def remove_quotes(string):
+        if string.startswith('"') and string.endswith('"'):
+            string = string[1:-1]
+        if string.startswith("'") and string.endswith("'"):
+            string = string[1:-1]
+        return string
+
     matches_single_quoted_string = "('([^']*)')" #Pattern must be surrounded by quotes
     matches_double_quoted_string = "(\"([^\"]*)\")" #Pattern must be surrounded by quotes
     matches_unquoted_string = "(([^\[\]'\":,;])+)" #Pattern cannot contain any of []'":,;
@@ -323,13 +330,13 @@ def parse_args_match(metadata_string):
     metadata_dict = {}
 
     for pair in re.finditer(matches_pair, metadata_string):
-        key = pair["key"] # get string of key, without quotes
+        key = remove_quotes(pair["key"]) # get string of key, without quotes
         if not key in metadata_dict:
             metadata_dict[key] = []
         if re.match(matches_list, pair["value"]):
             for match in re.finditer(matches_string, pair["value"]):
-                metadata_dict[key].append(match.group(0))
+                metadata_dict[key].append(remove_quotes(match.group(0)))
         else:
-            metadata_dict[key].append(pair["value"])
+            metadata_dict[key].append(remove_quotes(pair["value"]))
 
     return metadata_dict
